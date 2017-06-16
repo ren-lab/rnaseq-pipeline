@@ -1,0 +1,54 @@
+#! /usr/bin/env bash
+## Snakefile
+####################
+import glob
+BASE_DIR = workflow.basedir + "/../"
+R1 = config["R1_SUFFIX"]
+R2 = config["R2_SUFFIX"]
+fastqs = glob.glob("fastq/*"+R1)
+SAMPLES = [re.sub("fastq/(.+)"+ R1 +"$","\\1",a) for a in fastqs]
+
+GENOME = config["GENOME"]
+STAR_INDEX = config["STAR_INDEX_PATH"]+GENOME
+
+
+print(SAMPLES)
+
+rule all:
+  input: 
+    #expand("{sample}",sample=SAMPLES)
+    expand("{sample}/SJ.out.tab",sample=SAMPLES)
+
+rule star_align:
+  output: 
+    "{sample}/SJ.out.tab"
+  input:
+    #"fastq/{sample}_R1.fastq.bz2"
+    r1 = "fastq/{sample}_R1.fastq.bz2",
+    r2 = "fastq/{sample}_R2.fastq.bz2"
+  threads: 4
+  shell:
+    "echo {output}; "
+    "STAR --genomeDir {STAR_INDEX} --readFilesIn {input.r1} {input.r2} "
+    "--runThreadN {threads} "
+    "--outFileNamePrefix {wildcards.sample}/ "
+    "--outFilterMultimapScoreRange 1 "
+    "--outFilterMultimapNmax 20 "
+    "--outFilterMismatchNmax 10 "
+    "--alignIntronMax 500000 "
+    "--alignMatesGapMax 1000000 "
+    "--sjdbScore 2 "
+    "--alignSJDBoverhangMin 3 "
+    "--genomeLoad NoSharedMemory "
+    "--readFilesCommand bzcat "
+    "--sjdbOverhang 100 "
+    "--outSAMstrandField intronMotif "
+    "--outSAMtype BAM Unsorted "  #SortedByCoordinate "
+    "--twopassMode Basic "
+#    "--outWigType bedGraph "
+#    "--outWigNorm RPM "
+
+rule count:
+  input:
+    "{sample}/Aligned.out.bam"
+  output: 
