@@ -1,7 +1,12 @@
 ##### install the suite
 
 .PHONY: all dependencies annotation gtf
-all: dependencies annotation
+all: init dependencies annotation
+	@echo "Install complete"
+
+init:
+	@mkdir -p dependencies
+	@mkdir -p annotation/gtf
 
 ## install dependencies
 dependencies: dependencies/picard.jar
@@ -13,7 +18,6 @@ dependencies/picard.jar:
 annotation: gtf
 
 gtf: annotation/gtf/gencode.v19.annotation.gtf annotation/gtf/gencode.vM10.annotation.gtf
-	@mkdir -p annotation/gtf
 
 annotation/gtf/gencode.v19.annotation.gtf:
 	wget ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz -O $@.gz
