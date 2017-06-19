@@ -95,8 +95,8 @@ rule feature_count_rpkm:
   threads: 1
   shell:
     "featureCounts -a {BASE_DIR}/annotation/gtf/{GTF} -o {output.counts} {input} "
-    " -F GTF -T {threads} -p -t exon -g gene_name; "
-    "grep -v 'chrM' {output.counts} | Rscript {BASE_DIR}/scripts/featurecounts2rpkm.r - > {output;rpkm}"
+    " -F GTF -T {threads} -t exon -g gene_name; "
+    "grep -v 'chrM' {output.counts} | Rscript {BASE_DIR}/scripts/featurecounts2rpkm.r - > {output.rpkm}"
 
 
 rule combine_rpkms:

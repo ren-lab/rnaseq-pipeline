@@ -49,10 +49,10 @@ if [ $server == "silencer" ]; then
   touch Snakefile
   snakemake --unlock
   rm Snakefile
-#  echo "$(date) # Analysis Began" > $LOG
-  snakemake -p -k --ri --snakefile ${DIR}/Snakefile --cores $NTHREADS \
+  echo "$(date) # Analysis Began" > $LOG
+  nice -n 19 snakemake -p -k --ri --snakefile ${DIR}/Snakefile --cores $NTHREADS \
   --configfile ${DIR}/config.yaml --config GENOME=$genome #\
-#  2> >(tee -a $LOG >&2)
+  2> >(tee -a $LOG >&2)
 
 fi
 
