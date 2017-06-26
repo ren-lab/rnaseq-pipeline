@@ -34,7 +34,7 @@ rule star_align:
     #"fastq/{sample}_R1.fastq.bz2"
     r1 = "fastq/{sample}_R1.fastq.bz2",
     r2 = "fastq/{sample}_R2.fastq.bz2"
-  threads: 4
+  threads: 6
   shell:
     "STAR --genomeDir {STAR_INDEX} --readFilesIn {input.r1} {input.r2} "
     "--runThreadN {threads} "
