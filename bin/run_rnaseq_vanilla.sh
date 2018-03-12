@@ -51,7 +51,7 @@ if [ $server == "silencer" ]; then
   rm Snakefile
   echo "$(date) # Analysis Began" > $LOG
   nice -n 19 snakemake -p -k --ri --snakefile ${DIR}/Snakefile --cores $NTHREADS \
-  --configfile ${DIR}/config.yaml --config GENOME=$genome #\
+  --configfile ${DIR}/config.yaml --config GENOME=$genome \
   2> >(tee -a $LOG >&2)
 
 fi

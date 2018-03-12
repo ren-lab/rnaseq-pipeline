@@ -11,7 +11,7 @@ SAMPLES = [re.sub("fastq/(.+)"+ R1 +"$","\\1",a) for a in fastqs]
 ## annotation path
 GENOME = config["GENOME"]
 STAR_INDEX = config["STAR_INDEX_PATH"]+GENOME
-GTF_DICT = {"hg19":"gencode.v19.annotation.gtf"}
+GTF_DICT = {"hg19":"gencode.v19.annotation.gtf","mm10":"gencode.vM14.annotation.gtf"}
 GTF = GTF_DICT[GENOME]
 # dependencies.
 MARKDUP=BASE_DIR+"dependencies/picard.jar MarkDuplicates"

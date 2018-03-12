@@ -17,12 +17,12 @@ dependencies/picard.jar:
 ## install annotation
 annotation: gtf
 
-gtf: annotation/gtf/gencode.v19.annotation.gtf annotation/gtf/gencode.vM10.annotation.gtf
+gtf: annotation/gtf/gencode.v19.annotation.gtf annotation/gtf/gencode.vM14.annotation.gtf
 
 annotation/gtf/gencode.v19.annotation.gtf:
 	wget ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz -O $@.gz
 	gunzip $@.gz
 
-annotation/gtf/gencode.vM10.annotation.gtf:
-	wget ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_M10/gencode.vM10.annotation.gtf.gz -O $@.gz
+annotation/gtf/gencode.vM14.annotation.gtf:
+	wget ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_M14/gencode.vM14.annotation.gtf.gz -O $@.gz
 	gunzip $@.gz
