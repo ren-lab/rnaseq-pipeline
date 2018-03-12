@@ -44,7 +44,7 @@ LOG=run-$(date +%Y-%m-%d-%H-%M-%S).log
 . ${DIR}/validate_programs.sh
 
 if [ $server == "silencer" ]; then
-  source /mnt/silencer2/share/Piplines/environments/python3env/bin/activate
+  source /mnt/tscc/share/Pipelines/environments/python3env/bin/activate
   ### unlock the directory
   touch Snakefile
   snakemake --unlock

@@ -3,6 +3,7 @@
 ## Use this file to customize your  analysis ##
 ##################################################
 
-R1_SUFFIX: "_R1.fastq.bz2"
-R2_SUFFIX: "_R2.fastq.bz2"
-STAR_INDEX_PATH: "/mnt/silencer2/share/STAR_indices/"
+SE_SUFFIX: ".fastq"
+R1_SUFFIX: "_R1.fastq"
+#R2_SUFFIX: "_R2.fastq.bz2"
+STAR_INDEX_PATH: "/mnt/tscc/share/STAR_indices/"

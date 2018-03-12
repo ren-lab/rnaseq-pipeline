@@ -2,11 +2,28 @@
 ## Snakefile
 ####################
 import glob
+import re
+
 BASE_DIR = workflow.basedir + "/../"
+#suffix for single-end reads
+SE = config["SE_SUFFIX"]
+#suffix for paired-end reads
 R1 = config["R1_SUFFIX"]
-R2 = config["R2_SUFFIX"]
-fastqs = glob.glob("fastq/*"+R1)
-SAMPLES = [re.sub("fastq/(.+)"+ R1 +"$","\\1",a) for a in fastqs]
+R2 = R1.replace("1","2")
+#R2 = config["R2_SUFFIX"]
+fastqs_p1 = glob.glob("fastq/*"+R1+"*")
+fastqs_p2 = glob.glob("fastq/*"+R2+"*")
+fastqs_se = glob.glob("fastq/*"+SE+"*")
+fastqs_se = [x for x in fastqs_se if x not in fastqs_p1 and x not in fastqs_p2 ]
+
+SAMPLES_SE = [re.sub("fastq/(.+)"+ SE +".*$","\\1",a) for a in fastqs_se]
+SAMPLES_PE = [re.sub("fastq/(.+)"+ R1 +".*$","\\1",a) for a in fastqs_p1]
+FASTQ_DICT = dict(zip(SAMPLES_SE,fastqs_se))
+for idx in range(len(fastqs_p1)):
+#  print(
+  FASTQ_DICT[SAMPLES_PE[idx]] = [fastqs_p1[idx],fastqs_p2[idx]]
+
+SAMPLES = SAMPLES_SE + SAMPLES_PE
 
 ## annotation path
 GENOME = config["GENOME"]
@@ -23,7 +40,9 @@ rule all:
   input: 
     expand("featureCounts/{sample}.counts",sample=SAMPLES),
     expand("rpkm/{sample}-chrM.rpkm",sample=SAMPLES),
-    expand("combined-chrM.rpkm")
+    expand("combined-chrM.rpkm"),
+    expand("bigWig/{sample}.nodup.bw",sample=SAMPLES)
+
 
 
 rule star_align:
@@ -31,12 +50,18 @@ rule star_align:
     bam1=temp("STAR_out/{sample}/Aligned.sortedByCoord.out.bam"),
     bam2=temp("bam/{sample}.sorted.bam")
   input:
-    #"fastq/{sample}_R1.fastq.bz2"
-    r1 = "fastq/{sample}_R1.fastq.bz2",
-    r2 = "fastq/{sample}_R2.fastq.bz2"
+    lambda wildcards: FASTQ_DICT[wildcards.sample]
   threads: 6
-  shell:
-    "STAR --genomeDir {STAR_INDEX} --readFilesIn {input.r1} {input.r2} "
+  run:
+    fastqs = " ".join(input)
+    if fastqs.endswith(".bz2"): 
+      format = "bzcat"
+    elif fatqs.endswith(".gz"):
+        format = "zcat"
+    else: 
+        format = ""
+    shell(
+    "STAR --genomeDir {STAR_INDEX} --readFilesIn {fastqs} "
     "--runThreadN {threads} "
     "--outFileNamePrefix STAR_out/{wildcards.sample}/ "
     "--outFilterMultimapScoreRange 1 "
@@ -47,34 +72,37 @@ rule star_align:
     "--sjdbScore 2 "
     "--alignSJDBoverhangMin 3 "
     "--genomeLoad NoSharedMemory "
-    "--readFilesCommand bzcat "
+    "--readFilesCommand {format} "
     "--sjdbOverhang 100 "
     "--outSAMstrandField intronMotif "
     "--outSAMtype BAM SortedByCoordinate "
     "--twopassMode Basic ;"
     "ln {output.bam1} {output.bam2};"
+    )
 
 rule bam_rmdup:
   input:
     bam = "bam/{sample}.sorted.bam",
   output:
     bam = "bam/{sample}.nodup.bam",
+    bai = "bam/{sample}.nodup.bam.bai",
     qc = "qc/{sample}.dup.qc"
   log:
     "logs/markdup/{sample}.markdup.log"
   threads: 3
   shell:
-    "java -Xmx12G -XX:ParallelGCThreads=3 -jar {MARKDUP} TMP_DIR=tmp/{wildcards.sample} INPUT={input.bam} OUTPUT={output.bam} METRICS_FILE={output.qc} VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=true REMOVE_DUPLICATES=true 2> {log}"
+    "java -Xmx12G -XX:ParallelGCThreads=3 -jar {MARKDUP} TMP_DIR=tmp/{wildcards.sample} INPUT={input.bam} OUTPUT={output.bam} METRICS_FILE={output.qc} VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=true REMOVE_DUPLICATES=true 2> {log};"
+    "samtools index {output.bam}"
 
 rule bam2bigwig:
   input:
     bam = "bam/{sample}.nodup.bam"
   output: 
     bw = "bigWig/{sample}.nodup.bw"
-  threads: 1
+  threads: 6
   shell:
     "bamCoverage -b {input.bam} -o {output.bw} --outFileFormat bigwig "
-    "-bs 50 --numberOfProcessors 1 --normalizeUsingRPKM"
+    "-bs 50 --numberOfProcessors {threads} --normalizeUsingRPKM"
 
 #rule htseq: 
 #  input:
@@ -88,13 +116,14 @@ rule bam2bigwig:
 
 rule feature_count_rpkm:
   input:
-    "bam/{sample}.nodup.bam"
+    bam ="bam/{sample}.nodup.bam",
+    bai = "bam/{sample}.nodup.bam.bai",
   output:
     counts = "featureCounts/{sample}.counts",
     rpkm = "rpkm/{sample}-chrM.rpkm"
   threads: 1
   shell:
-    "featureCounts -a {BASE_DIR}/annotation/gtf/{GTF} -o {output.counts} {input} "
+    "featureCounts -a {BASE_DIR}/annotation/gtf/{GTF} -o {output.counts} {input.bam} "
     " -F GTF -T {threads} -t exon -g gene_name; "
     "grep -v 'chrM' {output.counts} | Rscript {BASE_DIR}/scripts/featurecounts2rpkm.r - > {output.rpkm}"
 
