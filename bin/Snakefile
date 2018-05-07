@@ -12,15 +12,18 @@ R1 = config["R1_SUFFIX"]
 R2 = R1.replace("1","2")
 #R2 = config["R2_SUFFIX"]
 fastqs_p1 = glob.glob("fastq/*"+R1+"*")
+# sort the fastqs in order the R1 and R2 files to match each othter. 
+fastqs_p1.sort()
 fastqs_p2 = glob.glob("fastq/*"+R2+"*")
+fastqs_p2.sort()
 fastqs_se = glob.glob("fastq/*"+SE+"*")
 fastqs_se = [x for x in fastqs_se if x not in fastqs_p1 and x not in fastqs_p2 ]
 
 SAMPLES_SE = [re.sub("fastq/(.+)"+ SE +".*$","\\1",a) for a in fastqs_se]
 SAMPLES_PE = [re.sub("fastq/(.+)"+ R1 +".*$","\\1",a) for a in fastqs_p1]
+SAMPLES_PE.sort()
 FASTQ_DICT = dict(zip(SAMPLES_SE,fastqs_se))
 for idx in range(len(fastqs_p1)):
-#  print(
   FASTQ_DICT[SAMPLES_PE[idx]] = [fastqs_p1[idx],fastqs_p2[idx]]
 
 SAMPLES = SAMPLES_SE + SAMPLES_PE
