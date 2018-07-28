@@ -51,7 +51,7 @@ rule star_align:
     bam2=temp("bam/{sample}.sorted.bam")
   input:
     lambda wildcards: FASTQ_DICT[wildcards.sample]
-  threads: 6
+  threads: 8
   run:
     fastqs = " ".join(input)
     if fastqs.endswith(".bz2"): 

@@ -44,7 +44,7 @@ LOG=run-$(date +%Y-%m-%d-%H-%M-%S).log
 . ${DIR}/validate_programs.sh
 
 if [ $server == "silencer" ]; then
-  source /mnt/tscc/share/Pipelines/environments/python3env/bin/activate
+  source /projects/ps-renlab/share/Pipelines/environments/python3env/bin/activate
   ### unlock the directory
   touch Snakefile
   snakemake --unlock
@@ -53,6 +53,31 @@ if [ $server == "silencer" ]; then
   nice -n 19 snakemake -p -k --ri --snakefile ${DIR}/Snakefile --cores $NTHREADS \
   --configfile ${DIR}/config.yaml --config GENOME=$genome #\
   2> >(tee -a $LOG >&2)
+
+elif [ $server == "TSCC" ]; then
+#  module load python
+  unset PYTHONPATH
+  source /projects/ps-renlab/share/Pipelines/environments/python3env_TSCC/bin/activate
+  ### unlock the directory
+  touch Snakefile
+  snakemake --unlock
+  rm Snakefile
+  ## started analysis
+  if [ ! -d pbslog ]; then mkdir pbslog; fi
+    echo "$(date) # Analysis Began" > $LOG
+  snakemake --snakefile ${DIR}/Snakefile -p  -k -j 1000 --ri \
+  --config GENOME=$genome --configfile ${DIR}/config.yaml \
+  --cluster "qsub -l nodes=1:ppn={threads} -N {rule} -q hotel -o pbslog/{wildcards.sample}.{rule}.pbs.out -e pbslog/{wildcards.sample}.{rule}.pbs.err" \
+  --jobscript ${DIR}/../scripts/jobscript.pbs --jobname "{rulename}.{jobid}.pbs" \
+  2> >(tee -a $LOG >&2)
+  echo "$(date) # Analysis finished" >> $LOG
+  [[ $email =~ @ ]] && (
+  echo "See attachment for the running log.
+  Your results are saved in:
+  $(pwd)"  | mail -s "ChIP-seq analysis Done" -a $LOG  $email
+  )
+else
+  echo -e "Invalide server option: $server"; exit 1;
 
 fi
 
