@@ -44,6 +44,7 @@ rule all:
     expand("featureCounts/{sample}.counts",sample=SAMPLES),
     expand("rpkm/{sample}-chrM.rpkm",sample=SAMPLES),
     expand("combined-chrM.rpkm"),
+    expand("combined-chrM.counts"),
     expand("bigWig/{sample}.nodup.bw",sample=SAMPLES)
 
 
@@ -54,7 +55,7 @@ rule star_align:
     bam2=temp("bam/{sample}.sorted.bam")
   input:
     lambda wildcards: FASTQ_DICT[wildcards.sample]
-  threads: 6
+  threads: 10 
   run:
     fastqs = " ".join(input)
     if fastqs.endswith(".bz2"): 
@@ -105,7 +106,7 @@ rule bam2bigwig:
   threads: 6
   shell:
     "bamCoverage -b {input.bam} -o {output.bw} --outFileFormat bigwig "
-    "-bs 50 --numberOfProcessors {threads} --normalizeUsingRPKM"
+    "-bs 50 --numberOfProcessors {threads} --normalizeUsing RPKM"
 
 #rule htseq: 
 #  input:
@@ -131,13 +132,17 @@ rule feature_count_rpkm:
     "grep -v 'chrM' {output.counts} | Rscript {BASE_DIR}/scripts/featurecounts2rpkm.r - > {output.rpkm}"
 
 
-rule combine_rpkms:
+rule combine_counts_rpkms:
   input:
-    expand("rpkm/{sample}-chrM.rpkm",sample=SAMPLES)
+    counts = expand("featureCounts/{samples}.counts",samples=SAMPLES),
+    rpkms = expand("rpkm/{samples}-chrM.rpkm",samples=SAMPLES),
   output: 
-    "combined-chrM.rpkm"
+    rpkm = "{sample}.rpkm",
+    count = "{sample}.counts"
   threads: 1
   shell:
-    "len=$(ls {input}|wc -l);"
-    "paste {input} |cut -f 1-6,$(seq -s, 7 7 $((7*len))) > {output}"
+    "len=$(ls {input.counts}|wc -l);"
+    "paste {input.rpkms} |cut -f 1-6,$(seq -s, 7 7 $((7*len))) > {output.rpkm};"
+    "paste {input.counts} |cut -f 1-6,$(seq -s, 7 7 $((7*len))) |"
+    "grep -v 'chrM' > {output.count}"
 

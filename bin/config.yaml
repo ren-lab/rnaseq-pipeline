@@ -6,4 +6,4 @@
 SE_SUFFIX: ".fastq"
 R1_SUFFIX: "_R1.fastq"
 #R2_SUFFIX: "_R2.fastq.bz2"
-STAR_INDEX_PATH: "/mnt/tscc/share/STAR_indices/"
+STAR_INDEX_PATH: "/projects/ps-renlab/share/STAR_indices/"
