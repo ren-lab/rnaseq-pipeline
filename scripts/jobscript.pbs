@@ -8,9 +8,8 @@
 # properties = {properties}
 module load picard
 module load R
-module load python
+#module load python
 module load samtools/1.3
-module load bedtools
 unset PYTHONPATH
 source /projects/ps-renlab/share/Pipelines/environments/python3env_TSCC/bin/activate
 export PATH=:$PATH:/projects/ps-renlab/share/bin
