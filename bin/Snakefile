@@ -31,7 +31,11 @@ SAMPLES = SAMPLES_SE + SAMPLES_PE
 ## annotation path
 GENOME = config["GENOME"]
 STAR_INDEX = config["STAR_INDEX_PATH"]+GENOME
-GTF_DICT = {"hg19":"gencode.v19.annotation.gtf","mm10":"gencode.vM14.annotation.gtf"}
+GTF_DICT = {"hg19":"gencode.v19.annotation.gtf",
+            "mm10":"gencode.vM14.annotation.gtf",
+            "panTro6":"panTro6.gtf",
+            "calJac3":"calJac3.gtf"}
+
 GTF = GTF_DICT[GENOME]
 # dependencies.
 MARKDUP=BASE_DIR+"dependencies/picard.jar MarkDuplicates"
@@ -60,10 +64,10 @@ rule star_align:
     fastqs = " ".join(input)
     if fastqs.endswith(".bz2"): 
       format = "bzcat"
-    elif fatqs.endswith(".gz"):
+    elif fastqs.endswith(".gz"):
         format = "zcat"
     else: 
-        format = ""
+        format = "cat"
     shell(
     "STAR --genomeDir {STAR_INDEX} --readFilesIn {fastqs} "
     "--runThreadN {threads} "
